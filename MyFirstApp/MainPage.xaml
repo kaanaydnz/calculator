@@ -2,37 +2,37 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MyFirstApp.MainPage"
-             BackgroundColor="#000000">
+             BackgroundColor="#000000"
+             Shell.NavBarIsVisible="False">
 
-    <Grid Padding="20"
+    <Grid Padding="10"
           RowDefinitions="*,Auto">
 
         <Grid Grid.Row="0"
-              RowDefinitions="*,5*">
+              RowDefinitions="2*,5*">
 
             <Grid Grid.Row="0"
-                  RowDefinitions="Auto,*"
-                  Padding="5,10"
-                  RowSpacing="5">
+                  RowDefinitions="*,Auto,*"
+                  Padding="1"
+                  RowSpacing="0">
 
                 <Label x:Name="OperationHistory"
-                       Grid.Row="0"
+                       Grid.Row="1"
                        Text=""
                        TextColor="White"
                        FontSize="20"
                        HorizontalTextAlignment="End"
-                       VerticalTextAlignment="Center"
+                       VerticalTextAlignment="End"
                        HeightRequest="35"
                        LineBreakMode="NoWrap"/>
 
                 <Label x:Name="Screen"
-                       Grid.Row="1"
+                       Grid.Row="2"
                        Text="0"
                        TextColor="White"
-                       FontSize="64"
+                       FontSize="50"
                        HorizontalTextAlignment="End"
-                       VerticalTextAlignment="Center"
-                       VerticalOptions="End"
+                       VerticalTextAlignment="Start"
                        LineBreakMode="NoWrap"/>
 
             </Grid>
@@ -41,9 +41,9 @@
             <Grid Grid.Row="1"
                   RowDefinitions="*,*,*,*,*"
                   ColumnDefinitions="*,*,*,*"
-                  Padding="10"
-                  ColumnSpacing="5"
-                  RowSpacing="5">
+                  Padding="5"
+                  ColumnSpacing="4"
+                  RowSpacing="4">
 
                 <!-- 1. Satır -->
                 <Button Text="C"

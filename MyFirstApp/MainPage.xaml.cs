@@ -10,6 +10,9 @@ public partial class MainPage : ContentPage
     private bool isFirstDigit = true;
     private string operationHistory = "";
 
+    private double lastSecondNumber = 0;
+    private string lastOperator = "";
+
     public MainPage()
     {
         InitializeComponent();
@@ -26,8 +29,20 @@ public partial class MainPage : ContentPage
 
         string value = digit.CommandParameter?.ToString() ?? "";
 
+        if (Screen.Text == "Error" || Screen.Text == "Undefined")
+            ClearClicked(sender, e);
+
         if (isFirstDigit)
         {
+            if (currentOperator == "")
+            {
+                firstNumber = 0;
+                lastOperator = "";
+                lastSecondNumber = 0;
+                operationHistory = "";
+                OperationHistory.Text = "";
+            }
+
             Screen.Text = value;
             isFirstDigit = false;
         }
@@ -39,8 +54,20 @@ public partial class MainPage : ContentPage
 
     private void DecimalClicked(object? sender, EventArgs e)
     {
+        if (Screen.Text == "Error" || Screen.Text == "Undefined")
+            ClearClicked(sender, e);
+
         if (isFirstDigit)
         {
+            if (currentOperator == "")
+            {
+                firstNumber = 0;
+                lastOperator = "";
+                lastSecondNumber = 0;
+                operationHistory = "";
+                OperationHistory.Text = "";
+            }
+
             Screen.Text = "0.";
             isFirstDigit = false;
         }
@@ -54,20 +81,32 @@ public partial class MainPage : ContentPage
     {
         Screen.Text = "0";
         OperationHistory.Text = "";
+
         operationHistory = "";
         firstNumber = 0;
         currentOperator = "";
+        lastSecondNumber = 0;
+        lastOperator = "";
+
         isFirstDigit = true;
     }
 
     private void PercentClicked(object? sender, EventArgs e)
     {
+        if (isFirstDigit)
+            return;
+
         if (double.TryParse(Screen.Text, NumberStyles.Float,
             CultureInfo.InvariantCulture, out double number))
         {
-            number /= 100;
-            Screen.Text = number.ToString(CultureInfo.InvariantCulture);
-            isFirstDigit = false;
+            number = Math.Round(number / 100, 10);
+
+            Screen.Text = number.ToString("G10", CultureInfo.InvariantCulture);
+
+            lastOperator = "";
+            lastSecondNumber = 0;
+
+            isFirstDigit = true;
         }
     }
 
@@ -75,8 +114,7 @@ public partial class MainPage : ContentPage
     {
         if (Screen.Text == "Error" || Screen.Text == "Undefined")
         {
-            Screen.Text = "0";
-            isFirstDigit = true;
+            ClearClicked(sender, e);
             return;
         }
 
@@ -86,6 +124,11 @@ public partial class MainPage : ContentPage
         if (Screen.Text.Length > 1)
         {
             Screen.Text = Screen.Text.Substring(0, Screen.Text.Length - 1);
+
+            if (Screen.Text == "0")
+            {
+                isFirstDigit = true;
+            }
 
             if (Screen.Text == "-")
             {
@@ -127,7 +170,7 @@ public partial class MainPage : ContentPage
 
     private double CalculateResult(double first, double second)
     {
-        return currentOperator switch
+        double result = currentOperator switch
         {
             "+" => first + second,
             "-" => first - second,
@@ -135,17 +178,30 @@ public partial class MainPage : ContentPage
             "/" => first / second,
             _ => first
         };
+
+        return Math.Round(result, 10);
     }
 
-    private double lastSecondNumber = 0;
-    private string lastOperator = "";
+    private void ShowError(string message)
+    {
+        Screen.Text = message;
+        OperationHistory.Text = "";
+
+        firstNumber = 0;
+        currentOperator = "";
+        lastSecondNumber = 0;
+        lastOperator = "";
+        operationHistory = "";
+
+        isFirstDigit = true;
+    }
 
     private void Hesapla(string op)
     {
         if (!double.TryParse(Screen.Text, NumberStyles.Float,
             CultureInfo.InvariantCulture, out double currentNumber))
         {
-            Screen.Text = "Error";
+            ShowError("Error");
             return;
         }
 
@@ -168,13 +224,7 @@ public partial class MainPage : ContentPage
 
             if (currentOperator == "/" && currentNumber == 0)
             {
-                Screen.Text = "Undefined";
-                currentOperator = "";
-                lastOperator = "";
-                firstNumber = 0;
-                isFirstDigit = true;
-                operationHistory = "";
-                OperationHistory.Text = "";
+                ShowError("Undefined");
                 return;
             }
 
@@ -187,6 +237,12 @@ public partial class MainPage : ContentPage
 
             double result = CalculateResult(firstNumber, currentNumber);
 
+            if (!double.IsFinite(result))
+            {
+                ShowError("Error");
+                return;
+            }
+
             OperationHistory.Text =
                 firstNumber.ToString(CultureInfo.InvariantCulture)
                 + " " + operatorSymbol + " "
@@ -194,6 +250,7 @@ public partial class MainPage : ContentPage
                 + " =";
 
             Screen.Text = result.ToString(CultureInfo.InvariantCulture);
+
             firstNumber = result;
             currentOperator = "";
             isFirstDigit = true;
@@ -201,26 +258,51 @@ public partial class MainPage : ContentPage
             return;
         }
 
+        if (currentOperator == "" && isFirstDigit && lastOperator == "")
+            return;
+
+        if (currentOperator != "" && isFirstDigit)
+        {
+            currentOperator = op;
+
+            string newSymbol = op switch
+            {
+                "*" => "×",
+                "/" => "÷",
+                _ => op
+            };
+
+            operationHistory =
+                firstNumber.ToString(CultureInfo.InvariantCulture)
+                + " " + newSymbol;
+
+            OperationHistory.Text = operationHistory;
+
+            return;
+        }
+
         lastOperator = "";
         lastSecondNumber = 0;
 
-        if (currentOperator != "" && !isFirstDigit)
+        if (currentOperator != "")
         {
             if (currentOperator == "/" && currentNumber == 0)
             {
-                Screen.Text = "Undefined";
-                currentOperator = "";
-                firstNumber = 0;
-                isFirstDigit = true;
-                operationHistory = "";
-                OperationHistory.Text = "";
+                ShowError("Undefined");
                 return;
             }
 
             firstNumber = CalculateResult(firstNumber, currentNumber);
+
+            if (!double.IsFinite(firstNumber))
+            {
+                ShowError("Error");
+                return;
+            }
+
             Screen.Text = firstNumber.ToString(CultureInfo.InvariantCulture);
         }
-        else if (currentOperator == "")
+        else
         {
             firstNumber = currentNumber;
         }
@@ -239,6 +321,7 @@ public partial class MainPage : ContentPage
             + " " + symbol;
 
         OperationHistory.Text = operationHistory;
+
         isFirstDigit = true;
     }
 }
